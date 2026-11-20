@@ -29,6 +29,22 @@ try {
   process.exit(1);
 }
 
+// Validate the post file before handing it on: the gate reads POST.json
+// from the output directory and refuses an entry whose url is not an X
+// post address, so a malformed file should fail here, loudly, instead of
+// being copied through and refused later with no explanation.
+let parsed: unknown;
+try {
+  parsed = JSON.parse(post.toString('utf8'));
+} catch (err) {
+  console.error(`POST.json is not valid JSON: ${(err as Error).message}`);
+  process.exit(1);
+}
+if (typeof parsed !== 'object' || parsed === null || typeof (parsed as { url?: unknown }).url !== 'string') {
+  console.error('POST.json must be an object with a string "url" field');
+  process.exit(1);
+}
+
 try {
   writeFileSync(join(outputDir, 'POST.json'), post);
 } catch (err) {
